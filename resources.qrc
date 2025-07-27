@@ -1,0 +1,12 @@
+<RCC>
+    <qresource prefix="/">
+    <file>Icons/restore_light.svg</file>
+    <file>Icons/restore_dark.svg</file>
+    <file>Icons/maximize_light.svg</file>
+    <file>Icons/maximize_dark.svg</file>
+    <file>Icons/minimize_light.svg</file>
+    <file>Icons/minimize_dark.svg</file>
+    <file>Icons/close_dark.svg</file>
+    <file>Icons/close_light.svg</file>
+    </qresource>
+</RCC>
