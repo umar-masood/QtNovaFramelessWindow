@@ -120,31 +120,39 @@ void Window::setupTitleBar() {
     titleBarLayout->addSpacing(5);
 
     /* Window Style Applying for Resizing*/
-    hwnd = reinterpret_cast<HWND>(winId());
+   HWND hwnd = reinterpret_cast<HWND>(winId());
 
-    LONG style = GetWindowLong(hwnd, GWL_STYLE);
-    style |= WS_THICKFRAME; 
-    SetWindowLong(hwnd, GWL_STYLE, style);
-    SetWindowPos(hwnd, nullptr, 0, 0, 0, 0,
-    SWP_NOZORDER | SWP_NOMOVE | SWP_NOSIZE | SWP_FRAMECHANGED);
+   LONG style = GetWindowLong(hwnd, GWL_STYLE);
+   style |= WS_THICKFRAME;
+   style |= WS_CAPTION;
+   SetWindowLong(hwnd, GWL_STYLE, style);
 
-    /* Content Area */
-    contentArea = new QWidget(this);
-    contentArea->setContentsMargins(0, 0, 0, 0);
-    contentArea->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+   // Force Windows to recalculate the frame based on new styles
+   SetWindowPos(hwnd, nullptr, 0, 0, 0, 0,
+                SWP_NOZORDER | SWP_NOMOVE | SWP_NOSIZE | SWP_FRAMECHANGED);
 
-    /* Entire Layout */
-    entireLayout = new QVBoxLayout;
-    entireLayout->setContentsMargins(0, 0, 0, 0);
-    entireLayout->setSpacing(0);
-    entireLayout->addSpacing(3);
-    entireLayout->addWidget(titleBar, 0, Qt::AlignTop);
-    entireLayout->addWidget(contentArea, 0);
-    setLayout(entireLayout);
+   // Enable double-click support on the title bar
+   LONG classStyle = GetClassLong(hwnd, GCL_STYLE);
+   classStyle |= CS_DBLCLKS;
+   SetClassLong(hwnd, GCL_STYLE, classStyle);
 
-    /* Apply Styles */
-    applyStyleSheet();
-    applyThemedIcons();
+   /* Content Area */
+   contentArea = new QWidget(this);
+   contentArea->setContentsMargins(0, 0, 0, 0);
+   contentArea->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+
+   /* Entire Layout */
+   entireLayout = new QVBoxLayout;
+   entireLayout->setContentsMargins(0, 0, 0, 0);
+   entireLayout->setSpacing(0);
+   entireLayout->addSpacing(3);
+   entireLayout->addWidget(titleBar, 0, Qt::AlignTop);
+   entireLayout->addWidget(contentArea, 0);
+   setLayout(entireLayout);
+
+   /* Apply Styles */
+   applyStyleSheet();
+   applyThemedIcons();
 }
 
 void Window::onCloseClicked() {
@@ -165,6 +173,8 @@ void Window::onMaximizeClicked() {
     } else {
         ::ShowWindow(hWnd, SW_MAXIMIZE);
     }
+
+    applyThemedIcons();
 }
 bool Window::nativeEvent(const QByteArray &eventType, void *message, qintptr *result)
 {
@@ -243,6 +253,7 @@ bool Window::nativeEvent(const QByteArray &eventType, void *message, qintptr *re
                 showBorder = true;
             }
             update();
+            applyThemedIcons();
         }
         break;
     }
