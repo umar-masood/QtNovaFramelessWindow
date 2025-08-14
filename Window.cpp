@@ -2,71 +2,42 @@
 
 Window::Window(QWidget *parent) : QWidget(nullptr), isDarkMode(false)
 {
-    setWindowFlags(Qt::FramelessWindowHint | Qt::NoDropShadowWindowHint | Qt::WindowMinMaxButtonsHint);
-    setAttribute(Qt::WA_TranslucentBackground);
+    setWindowFlags(Qt::FramelessWindowHint | Qt::WindowMinMaxButtonsHint);
     setupTitleBar();
 }
 
 void Window::setDarkMode(bool value) {
     isDarkMode = value; 
-    closeBtn->setDarkMode(isDarkMode);
-    minimizeBtn->setDarkMode(isDarkMode);
-    maximizeBtn->setDarkMode(isDarkMode);
+    for (Button *b : {closeBtn, minimizeBtn, maximizeBtn})  b->setDarkMode(isDarkMode);
     applyThemedIcons();
     update(); 
 }
 
 void Window::applyThemedIcons() {
-    closeBtn->setIconPaths(closeIconLight, closeIconDark);
-    minimizeBtn->setIconPaths(minimizeIconLight, minimizeIconDark);
-    if (isMaximized()) {
-        maximizeBtn->setIconPaths(restoreIconLight, restoreIconDark);
-        maximizeBtn->setIconSize(QSize(20, 20));
-        showBorder = false;
-    } else {
-        maximizeBtn->setIconPaths(maximizeIconLight, maximizeIconDark);
-        maximizeBtn->setIconSize(QSize(16, 16));
-        showBorder = true;
-    }
+    closeBtn->setUnicodeIcon("\uE8BB", 10);
+    minimizeBtn->setUnicodeIcon("\uE921", 10);
+    bool nativeMaximized = ::IsZoomed(hwnd); 
+    if (nativeMaximized)
+        maximizeBtn->setUnicodeIcon("\uE923", 10); 
+    else
+        maximizeBtn->setUnicodeIcon("\uE922", 10);
+
     update();
 }
+
 
 void Window::applyStyleSheet() {
     titleBar->setStyleSheet("background-color: transparent;");
     contentArea->setStyleSheet("background-color: transparent;");
+    customTitleBar->setAttribute(Qt::WA_TranslucentBackground, true);
 }
 
-void Window::paintEvent(QPaintEvent *event)
-{
+void Window::paintEvent(QPaintEvent *event) {
     Q_UNUSED(event);
-    int radius = !showBorder ? 0 : 8;
-
-    // Rounded mask
-    QBitmap bitmap(width(), height());
-    bitmap.fill(Qt::color0);
-    QPainter maskPainter(&bitmap);
-    maskPainter.setRenderHints(QPainter::Antialiasing);
-    QPainterPath maskPath;
-    maskPath.addRoundedRect(rect(), radius, radius);
-    maskPainter.fillPath(maskPath, Qt::color1);
-    setMask(bitmap);
-
-    // Colors
     QColor BG = isDarkMode ? QColor("#1F1F1F") : QColor("#FFFFFF");
-    QColor BR = isDarkMode ? QColor("#4D4D4D") : QColor("#CCCCCC");
-
     QPainter painter(this);
     painter.setRenderHints(QPainter::Antialiasing);
-    painter.setBrush(BG);
-
-    QPen pen(BR);
-    pen.setWidth(!showBorder ? 0 : 1);
-    painter.setPen(!showBorder ? Qt::NoPen : pen);
-
-    QRect adjustedRect = rect().adjusted(1.5, 1.5, -1.5, -1.5);
-    QPainterPath path;
-    path.addRoundedRect(!showBorder ? rect() : adjustedRect, radius, radius);
-    painter.drawPath(path);
+    painter.fillRect(rect(), BG);
 }
 
 Button * Window::windowButton()
@@ -120,21 +91,25 @@ void Window::setupTitleBar() {
     titleBarLayout->addSpacing(5);
 
     /* Window Style Applying for Resizing*/
-   HWND hwnd = reinterpret_cast<HWND>(winId());
+    hwnd = reinterpret_cast<HWND>(winId());
 
-   LONG style = GetWindowLong(hwnd, GWL_STYLE);
-   style |= WS_THICKFRAME;
-   style |= WS_CAPTION;
-   SetWindowLong(hwnd, GWL_STYLE, style);
+    LONG style = GetWindowLong(hwnd, GWL_STYLE);
+    style |= WS_THICKFRAME | WS_CAPTION;
+    SetWindowLong(hwnd, GWL_STYLE, style);
 
-   // Force Windows to recalculate the frame based on new styles
-   SetWindowPos(hwnd, nullptr, 0, 0, 0, 0,
-                SWP_NOZORDER | SWP_NOMOVE | SWP_NOSIZE | SWP_FRAMECHANGED);
+    const DWORD DWMWA_WINDOW_CORNER_PREFERENCE = 33;
+    enum DWM_WINDOW_CORNER_PREFERENCE {
+        DWMWCP_DEFAULT      = 0,
+        DWMWCP_DONOTROUND   = 1,
+        DWMWCP_ROUND        = 2,
+        DWMWCP_ROUNDSMALL   = 3
+    };
 
-   // Enable double-click support on the title bar
-   LONG classStyle = GetClassLong(hwnd, GCL_STYLE);
-   classStyle |= CS_DBLCLKS;
-   SetClassLong(hwnd, GCL_STYLE, classStyle);
+    DWM_WINDOW_CORNER_PREFERENCE pref = DWMWCP_ROUND; 
+    DwmSetWindowAttribute(hwnd, DWMWA_WINDOW_CORNER_PREFERENCE, &pref, sizeof(pref));
+    
+    // Force Windows to recalculate the frame based on new styles
+    SetWindowPos(hwnd, nullptr, 0, 0, 0, 0, SWP_NOZORDER | SWP_NOMOVE | SWP_NOSIZE | SWP_FRAMECHANGED);
 
    /* Content Area */
    contentArea = new QWidget(this);
@@ -145,7 +120,6 @@ void Window::setupTitleBar() {
    entireLayout = new QVBoxLayout;
    entireLayout->setContentsMargins(0, 0, 0, 0);
    entireLayout->setSpacing(0);
-   entireLayout->addSpacing(3);
    entireLayout->addWidget(titleBar, 0, Qt::AlignTop);
    entireLayout->addWidget(contentArea, 0);
    setLayout(entireLayout);
@@ -156,36 +130,28 @@ void Window::setupTitleBar() {
 }
 
 void Window::onCloseClicked() {
-    HWND hWnd = reinterpret_cast<HWND>(winId());
-    ::SendMessage(hWnd, WM_CLOSE, 0, 0);
+    ::SendMessage(hwnd, WM_CLOSE, 0, 0);
 }
 
 void Window::onMinimizeClicked() {
-    HWND hWnd = reinterpret_cast<HWND>(winId());
-    ::ShowWindow(hWnd, SW_MINIMIZE);
+    ::ShowWindow(hwnd, SW_MINIMIZE);
 }
 
 void Window::onMaximizeClicked() {
-    HWND hWnd = reinterpret_cast<HWND>(winId());
-
-    if (::IsZoomed(hWnd)) {
-        ::ShowWindow(hWnd, SW_RESTORE);
-    } else {
-        ::ShowWindow(hWnd, SW_MAXIMIZE);
-    }
-
+    if (::IsZoomed(hwnd)) 
+        ::ShowWindow(hwnd, SW_RESTORE);
+    else 
+        ::ShowWindow(hwnd, SW_MAXIMIZE);
+    
     applyThemedIcons();
 }
+
 bool Window::nativeEvent(const QByteArray &eventType, void *message, qintptr *result)
 {
     MSG *msg = (MSG *)message;
     switch (msg->message) {
     case WM_NCCALCSIZE:
-        if (msg->lParam) {
-            *result = 0; 
-            return true;
-        }
-        break;
+        return true; break;
 
     case WM_NCHITTEST: {
         RECT winrect;
@@ -197,67 +163,46 @@ bool Window::nativeEvent(const QByteArray &eventType, void *message, qintptr *re
         int resize_border_Width = 8;
 
         if (x >= winrect.left && x < winrect.left + resize_border_Width && y < winrect.bottom && y >= winrect.bottom - resize_border_Width) {
-            *result = HTBOTTOMLEFT;
-            return true;
+            *result = HTBOTTOMLEFT; return true;
         }
         if (x < winrect.right && x >= winrect.right - resize_border_Width && y < winrect.bottom && y >= winrect.bottom - resize_border_Width) {
-            *result = HTBOTTOMRIGHT;
-            return true;
+            *result = HTBOTTOMRIGHT; return true;
         }
         if (x >= winrect.left && x < winrect.left + resize_border_Width && y >= winrect.top && y < winrect.top + resize_border_Width) {
-            *result = HTTOPLEFT;
-            return true;
+            *result = HTTOPLEFT; return true;
         }
         if (x < winrect.right && x >= winrect.right - resize_border_Width && y >= winrect.top && y < winrect.top + resize_border_Width) {
-            *result = HTTOPRIGHT;
-            return true;
+            *result = HTTOPRIGHT; return true;
         }
         if (x >= winrect.left && x < winrect.left + resize_border_Width) {
-            *result = HTLEFT;
-            return true;
+            *result = HTLEFT; return true;
         }
         if (x < winrect.right && x >= winrect.right - resize_border_Width) {
-            *result = HTRIGHT;
-            return true;
+            *result = HTRIGHT; return true;
         }
         if (y < winrect.bottom && y >= winrect.bottom - resize_border_Width) {
             *result = HTBOTTOM;
             return true;
         }
         if (y >= winrect.top && y < winrect.top + resize_border_Width) {
-            *result = HTTOP;
-            return true;
+            *result = HTTOP; return true;
         }
         if (determineNonClickableWidgetUnderMouse(customTitleBarLayout, local_x, local_y)) {
-            *result = HTCAPTION;
-            return true;
+            *result = HTCAPTION; return true;
         }
+
         *result = HTTRANSPARENT;
         break;
     }
 
     case WM_SIZE: {
-        if (maximizeBtn) {
-            WINDOWPLACEMENT wp;
-            GetWindowPlacement(hwnd, &wp);
-            bool isMaximized = (wp.showCmd == SW_MAXIMIZE);
-            maximizeBtn->setChecked(isMaximized);
-
-            if (isMaximized) {
-                maximizeBtn->setIconPaths(restoreIconLight, restoreIconDark);
-                maximizeBtn->setIconSize(QSize(20, 20));
-                showBorder = false;
-            } else {
-                maximizeBtn->setIconPaths(maximizeIconLight, maximizeIconDark);
-                maximizeBtn->setIconSize(QSize(16, 16));
-                showBorder = true;
-            }
-            update();
-            applyThemedIcons();
-        }
-        break;
+    if (maximizeBtn) {
+        maximizeBtn->setChecked(IsZoomed(hwnd));
+        applyThemedIcons(); 
     }
-
+    break;
+    }
+    
     default:
         break;
     }
@@ -265,8 +210,7 @@ bool Window::nativeEvent(const QByteArray &eventType, void *message, qintptr *re
 }
 
 bool Window::determineNonClickableWidgetUnderMouse(QLayout *layout, int x, int y) {
-    if (!layout->count() && layout->geometry().contains(x, y))
-        return true;
+    if (!layout->count() && layout->geometry().contains(x, y)) return true;
 
     for (int i = 0; i < layout->count(); ++i) {
         auto item = layout->itemAt(i)->widget();
@@ -281,16 +225,12 @@ bool Window::determineNonClickableWidgetUnderMouse(QLayout *layout, int x, int y
     }
     return false;
 }
+
 bool Window::event(QEvent *evt) {
     switch (evt->type()) {
-    case QEvent::WindowActivate:
-        propagateActiveStateInCustomTitlebar(customTitleBarLayout, true);
-        break;
-    case QEvent::WindowDeactivate:
-        propagateActiveStateInCustomTitlebar(customTitleBarLayout, false);
-        break;
-    default:
-        break;
+    case QEvent::WindowActivate:     propagateActiveStateInCustomTitlebar(customTitleBarLayout, true);   break;
+    case QEvent::WindowDeactivate:   propagateActiveStateInCustomTitlebar(customTitleBarLayout, false);  break;
+    default:  break; 
     }
     return QWidget::event(evt);
 }
@@ -309,19 +249,10 @@ void Window::propagateActiveStateInCustomTitlebar(QLayout *layout, bool active_s
     }
 }
 
-QHBoxLayout* Window::_titleBarLayout() const {
-    return customTitleBarLayout;
-}
+QHBoxLayout* Window::_titleBarLayout() const { return customTitleBarLayout; }
 
-QWidget* Window::_CustomTitleBarArea() const {
-    return customTitleBar;
-}
+QWidget* Window::_CustomTitleBarArea() const { return customTitleBar; }
 
-QWidget* Window::_titleBarArea() const {
-    return titleBar;
-}
+QWidget* Window::_titleBarArea() const { return titleBar; }
 
-QWidget* Window::_contentArea() const {
-    return contentArea;
-}
-
+QWidget* Window::_contentArea() const { return contentArea; }
