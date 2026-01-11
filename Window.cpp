@@ -1,14 +1,14 @@
 #include "Window.h"
 
-Window::Window(QWidget *parent) : QWidget(nullptr), isDarkMode(false)
-{
+Window::Window(QWidget *parent) : QWidget(nullptr), isDarkMode(false) {
     setWindowFlags(Qt::FramelessWindowHint | Qt::WindowMinMaxButtonsHint);
     setupTitleBar();
 }
 
 void Window::setDarkMode(bool value) {
     isDarkMode = value; 
-    for (Button *b : {closeBtn, minimizeBtn, maximizeBtn})  b->setDarkMode(isDarkMode);
+    for (Button *b : {closeBtn, minimizeBtn, maximizeBtn}) 
+        b->setDarkMode(isDarkMode);
     applyThemedIcons();
     update(); 
 }
@@ -27,9 +27,9 @@ void Window::applyThemedIcons() {
 
 
 void Window::applyStyleSheet() {
-    titleBar->setStyleSheet("background-color: transparent;");
-    contentArea->setStyleSheet("background-color: transparent;");
-    customTitleBar->setAttribute(Qt::WA_TranslucentBackground, true);
+    _titleBar->setStyleSheet("background-color: transparent;");
+    _contentArea->setStyleSheet("background-color: transparent;");
+    _customTitleBar->setAttribute(Qt::WA_TranslucentBackground, true);
 }
 
 void Window::paintEvent(QPaintEvent *event) {
@@ -40,39 +40,38 @@ void Window::paintEvent(QPaintEvent *event) {
     painter.fillRect(rect(), BG);
 }
 
-Button * Window::windowButton()
-{
+Button * Window::windowButton() {
     Button *b = new Button;
     b->setSecondary(true);
     b->setIconSize(QSize(16,16));
     b->setDisplayMode(Button::ToolButton);
-    b->setSize(QSize(30, 30));
+    b->setFixedSize(QSize(30, 30));
     return b;
 }
 
 void Window::setupTitleBar() {
     /* Title Bar */
-    titleBar = new QWidget(this);
-    titleBar->setFixedHeight(36);
-    titleBar->setContentsMargins(0, 0, 0, 0);
-    titleBar->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+    _titleBar = new QWidget(this);
+    _titleBar->setFixedHeight(36);
+    _titleBar->setContentsMargins(0, 0, 0, 0);
+    _titleBar->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
     
     /* Title Bar Main Layout*/
-    titleBarLayout = new QHBoxLayout(titleBar);
+    titleBarLayout = new QHBoxLayout(_titleBar);
     titleBarLayout->setContentsMargins(0, 0, 0, 0);
     titleBarLayout->setSpacing(0);
 
     /* Custom Title Bar*/
-    customTitleBar = new QWidget(this);
-    customTitleBar->setContentsMargins(0, 0, 0, 0);
-    customTitleBar->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-    titleBarLayout->addWidget(customTitleBar);
+    _customTitleBar = new QWidget(this);
+    _customTitleBar->setContentsMargins(0, 0, 0, 0);
+    _customTitleBar->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    titleBarLayout->addWidget(_customTitleBar);
 
     /* Custom Title Bar Layout*/
-    customTitleBarLayout = new QHBoxLayout(customTitleBar);
-    customTitleBarLayout->setSpacing(0);
-    customTitleBarLayout->setContentsMargins(5, 0, 0, 0);
-    customTitleBarLayout->setAlignment(Qt::AlignLeft);
+    _customTitleBarLayout = new QHBoxLayout(_customTitleBar);
+    _customTitleBarLayout->setSpacing(0);
+    _customTitleBarLayout->setContentsMargins(5, 0, 0, 0);
+    _customTitleBarLayout->setAlignment(Qt::AlignLeft);
 
     /* Window Controls*/
     closeBtn = windowButton();
@@ -112,16 +111,16 @@ void Window::setupTitleBar() {
     SetWindowPos(hwnd, nullptr, 0, 0, 0, 0, SWP_NOZORDER | SWP_NOMOVE | SWP_NOSIZE | SWP_FRAMECHANGED);
 
    /* Content Area */
-   contentArea = new QWidget(this);
-   contentArea->setContentsMargins(0, 0, 0, 0);
-   contentArea->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+   _contentArea = new QWidget(this);
+   _contentArea->setContentsMargins(0, 0, 0, 0);
+   _contentArea->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 
    /* Entire Layout */
    entireLayout = new QVBoxLayout;
    entireLayout->setContentsMargins(0, 0, 0, 0);
    entireLayout->setSpacing(0);
-   entireLayout->addWidget(titleBar, 0, Qt::AlignTop);
-   entireLayout->addWidget(contentArea, 0);
+   entireLayout->addWidget(_titleBar, 0, Qt::AlignTop);
+   entireLayout->addWidget(_contentArea, 0);
    setLayout(entireLayout);
 
    /* Apply Styles */
@@ -129,13 +128,9 @@ void Window::setupTitleBar() {
    applyThemedIcons();
 }
 
-void Window::onCloseClicked() {
-    ::SendMessage(hwnd, WM_CLOSE, 0, 0);
-}
+void Window::onCloseClicked() { ::SendMessage(hwnd, WM_CLOSE, 0, 0); }
 
-void Window::onMinimizeClicked() {
-    ::ShowWindow(hwnd, SW_MINIMIZE);
-}
+void Window::onMinimizeClicked() { ::ShowWindow(hwnd, SW_MINIMIZE); }
 
 void Window::onMaximizeClicked() {
     if (::IsZoomed(hwnd)) 
@@ -146,8 +141,7 @@ void Window::onMaximizeClicked() {
     applyThemedIcons();
 }
 
-bool Window::nativeEvent(const QByteArray &eventType, void *message, qintptr *result)
-{
+bool Window::nativeEvent(const QByteArray &eventType, void *message, qintptr *result) {
     MSG *msg = (MSG *)message;
     switch (msg->message) {
     case WM_NCCALCSIZE:
@@ -165,29 +159,37 @@ bool Window::nativeEvent(const QByteArray &eventType, void *message, qintptr *re
         if (x >= winrect.left && x < winrect.left + resize_border_Width && y < winrect.bottom && y >= winrect.bottom - resize_border_Width) {
             *result = HTBOTTOMLEFT; return true;
         }
+        
         if (x < winrect.right && x >= winrect.right - resize_border_Width && y < winrect.bottom && y >= winrect.bottom - resize_border_Width) {
             *result = HTBOTTOMRIGHT; return true;
         }
+        
         if (x >= winrect.left && x < winrect.left + resize_border_Width && y >= winrect.top && y < winrect.top + resize_border_Width) {
             *result = HTTOPLEFT; return true;
         }
+        
         if (x < winrect.right && x >= winrect.right - resize_border_Width && y >= winrect.top && y < winrect.top + resize_border_Width) {
             *result = HTTOPRIGHT; return true;
         }
+        
         if (x >= winrect.left && x < winrect.left + resize_border_Width) {
             *result = HTLEFT; return true;
         }
+        
         if (x < winrect.right && x >= winrect.right - resize_border_Width) {
             *result = HTRIGHT; return true;
         }
+        
         if (y < winrect.bottom && y >= winrect.bottom - resize_border_Width) {
             *result = HTBOTTOM;
             return true;
         }
+        
         if (y >= winrect.top && y < winrect.top + resize_border_Width) {
             *result = HTTOP; return true;
         }
-        if (determineNonClickableWidgetUnderMouse(customTitleBarLayout, local_x, local_y)) {
+        
+        if (determineNonClickableWidgetUnderMouse(_customTitleBarLayout, local_x, local_y)) {
             *result = HTCAPTION; return true;
         }
 
@@ -203,8 +205,7 @@ bool Window::nativeEvent(const QByteArray &eventType, void *message, qintptr *re
     break;
     }
     
-    default:
-        break;
+    default: break;
     }
     return false;
 }
@@ -228,8 +229,8 @@ bool Window::determineNonClickableWidgetUnderMouse(QLayout *layout, int x, int y
 
 bool Window::event(QEvent *evt) {
     switch (evt->type()) {
-    case QEvent::WindowActivate:     propagateActiveStateInCustomTitlebar(customTitleBarLayout, true);   break;
-    case QEvent::WindowDeactivate:   propagateActiveStateInCustomTitlebar(customTitleBarLayout, false);  break;
+    case QEvent::WindowActivate:     propagateActiveStateInCustomTitlebar(_customTitleBarLayout, true);   break;
+    case QEvent::WindowDeactivate:   propagateActiveStateInCustomTitlebar(_customTitleBarLayout, false);  break;
     default:  break; 
     }
     return QWidget::event(evt);
@@ -249,10 +250,7 @@ void Window::propagateActiveStateInCustomTitlebar(QLayout *layout, bool active_s
     }
 }
 
-QHBoxLayout* Window::_titleBarLayout() const { return customTitleBarLayout; }
-
-QWidget* Window::_CustomTitleBarArea() const { return customTitleBar; }
-
-QWidget* Window::_titleBarArea() const { return titleBar; }
-
-QWidget* Window::_contentArea() const { return contentArea; }
+QHBoxLayout* Window::customTitleBarLayout() const { return _customTitleBarLayout; }
+QWidget* Window::customTitleBar() const { return _customTitleBar; }
+QWidget* Window::titleBar() const { return _titleBar; }
+QWidget* Window::contentArea() const { return _contentArea; }
