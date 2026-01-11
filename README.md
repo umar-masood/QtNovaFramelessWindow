@@ -34,7 +34,7 @@ int main(int argc, char *argv[]) {
 ```
 ### You can add your own widgets into the window’s content area like this:
 > [!IMPORTANT]
-> In order to add widget into the content area of window, then you must pass frameless custom window _contentArea() to the constructor of a widget as a parent.
+> In order to add widget into the content area of window, then you must pass frameless custom window `contentArea()` to the constructor of a widget as a parent.
 
 ```cpp
 QPushButton *btn = new QPushButton("Click Me", window.contentArea());
@@ -44,7 +44,7 @@ layout->addWidget(btn);
 
 ### You can add interactive widgets into Custom Title bar
 > [!IMPORTANT]
-> If you want to add widget into the custom tilebar of frameless custom window then pass window customTitleBarArea() to the constructor of that widget as a parent.
+> If you want to add widget into the custom tilebar of frameless custom window then pass window `customTitleBarArea()` to the constructor of that widget as a parent.
 ```cpp
     // Adding a button into custom title bar (interactive)
     QPushButton *titleBtn = new QPushButton("Title Action", w.customTitleBarArea());
