@@ -7,6 +7,8 @@
 #include <QWindow>
 #include <QHBoxLayout>
 #include <QObject>
+#include <QPoint>
+#include <QSet>
 
 class Window : public QWidget {
     Q_OBJECT
@@ -16,55 +18,60 @@ class Window : public QWidget {
     virtual ~Window() = default;
 
     void setDarkMode(bool value);
-    void applyThemedIcons();
-    void applyStyleSheet();
-    void setupTitleBar();
+    void setInteractiveTitleBarWidget(QWidget *widget);
 
-    QHBoxLayout* titleBarLayout() const;
-    QWidget* customTitleBar() const;
     QWidget* titleBar() const;
     QWidget* contentArea() const;
-
-    HWND hwnd;
 
     protected:
     void paintEvent(QPaintEvent *event) override;
     bool nativeEvent(const QByteArray &eventType, void *message, qintptr *result) override;
-    bool event(QEvent *evt) override;
 
     private:
-    bool determineNonClickableWidgetUnderMouse(QLayout *layout, int x, int y);
-    void propagateActiveStateInCustomTitlebar(QLayout *layout, bool active_state);
 
-    Button* windowButton();
+    // Current Window Handle (ID)
+    HWND hwnd;
 
+    // Set Window Controls Icons
+    void applyThemedIcons();
+
+    // Set Window Widgets theme
+    void applyStyleSheet();
+
+    // Apply DWM Effects such as rounded corners, shadow etc.
+    void applyDWMEffects();
+
+    // Setup whole window
+    void setupWindow();
+
+    // Check weather the current coordinates lie inside titlebar interactive widgets
+    bool isPointInsideInteractiveTitleBarWidgets(int x, int y);
+
+    // Helper function to create window control 
+    Button* createWindowButton();
+
+    // Set to store unique interactive widgets
+    QSet<QWidget *> interactiveWidgets;
+
+    // Theme Mode flag
     bool isDarkMode;
-    bool showBorder = true;
 
+    // Buttons
     Button *closeBtn = nullptr;
     Button *minimizeBtn = nullptr;
     Button *maximizeBtn = nullptr;
     
-    QWidget *_titleBar = nullptr;
-    QHBoxLayout *titleBarLayout = nullptr;
+    // Main Title Bar
+    QWidget *_mainTitleBar = nullptr;
+    QHBoxLayout *_mainTitleBarLayout = nullptr;
 
-    QWidget *_customTitleBar = nullptr;
-    QHBoxLayout *_customTitleBarLayout = nullptr;
+    // Sub Title Bar (Custom Title Bar)
+    QWidget *_subTitleBar = nullptr;
+    QHBoxLayout *_subTitleBarLayout = nullptr;
 
+    // Main Content Area
     QWidget *_contentArea = nullptr;
     QVBoxLayout *entireLayout = nullptr;
-    
-    const QString closeIconLight = ":/Icons/close_light.svg";
-    const QString closeIconDark = ":/Icons/close_dark.svg";
-
-    const QString minimizeIconLight = ":/Icons/minimize_light.svg";
-    const QString minimizeIconDark = ":/Icons/minimize_dark.svg";
-
-    const QString maximizeIconLight = ":/Icons/maximize_light.svg";
-    const QString maximizeIconDark = ":/Icons/maximize_dark.svg";
-
-    const QString restoreIconLight = ":/Icons/restore_light.svg";
-    const QString restoreIconDark = ":/Icons/restore_dark.svg";
 
     private slots:
     void onCloseClicked();
