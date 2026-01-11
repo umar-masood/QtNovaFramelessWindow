@@ -37,19 +37,19 @@ int main(int argc, char *argv[]) {
 > In order to add widget into the content area of window, then you must pass frameless custom window _contentArea() to the constructor of a widget as a parent.
 
 ```cpp
-QPushButton *btn = new QPushButton("Click Me", window._contentArea());
-QVBoxLayout *layout = new QVBoxLayout(window._contentArea());
+QPushButton *btn = new QPushButton("Click Me", window.contentArea());
+QVBoxLayout *layout = new QVBoxLayout(window.contentArea());
 layout->addWidget(btn);
 ```
 
 ### You can add interactive widgets into Custom Title bar
 > [!IMPORTANT]
-> If you want to add widget into the custom tilebar of frameless custom window then pass window _CustomTitleBarArea() to the constructor of that widget as a parent.
+> If you want to add widget into the custom tilebar of frameless custom window then pass window customTitleBarArea() to the constructor of that widget as a parent.
 ```cpp
     // Adding a button into custom title bar (interactive)
-    QPushButton *titleBtn = new QPushButton("Title Action", w._CustomTitleBarArea());
+    QPushButton *titleBtn = new QPushButton("Title Action", w.customTitleBarArea());
     titleBtn->setProperty("clickable widget", true);  // Mark as clickable
-    w._titleBarLayout()->addWidget(titleBtn);
+    w.titleBarLayout()->addWidget(titleBtn);
 ```
 > [!IMPORTANT]
 > The custom title bar can hold widgets, but by default, the whole title bar is treated as draggable space. To make a widget clickable (interactive), you must set:
