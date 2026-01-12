@@ -26,7 +26,7 @@
 `components/Button.h`
 
 > [!IMPORTANT]
-> This custom window uses a custom `Button` component, make sure that component must be present in its folder. To get custom Button component, checkout out our `QtNovaUI` repo on GitHub.
+> This customized window uses a custom `Button` component, make sure that component must be present in its folder. To get custom Button component, check out our `QtNovaUI` repo on GitHub.
 
 > [!IMPORTANT]
 > Must include `Button.h` dependencies which includes `SmoothOpacity.cpp/.h`, `SmoothShadow.cpp/h`, `SpinnerProgress.cpp/.h`.
