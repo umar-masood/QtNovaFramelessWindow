@@ -12,6 +12,11 @@
 - Embeddable content area for your application UI.
 - Interactive custom widgets in title bar (clickable property support).
 
+## Use of this Custom Frame Window in `Vaultorix`:
+<img width="1365" height="765" alt="image" src="https://github.com/user-attachments/assets/7a0e0037-9866-4422-8a11-139093496573" />
+<img width="1365" height="767" alt="image" src="https://github.com/user-attachments/assets/2df7f112-548a-47e0-ad7b-4edf85e0af91" />
+
+
 ## 📦 File Structure
 **QtNovaFramelessWindow/**
 
