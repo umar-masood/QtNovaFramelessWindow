@@ -1,91 +1,19 @@
 #include "Window.h"
 
 Window::Window(QWidget *parent) : QWidget(nullptr), isDarkMode(false) {
-    setWindowFlags(Qt::FramelessWindowHint | Qt::WindowMinMaxButtonsHint);
-    setupWindow();
-}
+    /* Window Properties */
+    setAttribute(Qt::WA_TranslucentBackground);
+    setMouseTracking(true);
+    setWindowFlags(Qt::FramelessWindowHint | Qt::NoDropShadowWindowHint);
 
-void Window::setDarkMode(bool value) {
-    isDarkMode = value; 
-    for (Button *b : {closeBtn, minimizeBtn, maximizeBtn}) 
-        b->setDarkMode(isDarkMode);
-
-    applyThemedIcons();
-    update(); 
-}
-
-void Window::setInteractiveTitleBarWidget(QWidget *widget) {
-    if (!widget) 
-        return;
- 
-    if (interactiveWidgets.contains(widget)) 
-        return;
-
-    interactiveWidgets.insert(widget);
-}
-
-void Window::applyThemedIcons() {
-    closeBtn->setUnicodeIcon("\uE8BB", 10);
-    minimizeBtn->setUnicodeIcon("\uE921", 10);
-
-    if (::IsZoomed(hwnd))
-        maximizeBtn->setUnicodeIcon("\uE923", 10); 
-    else
-        maximizeBtn->setUnicodeIcon("\uE922", 10);
-
-    update();
-}
-
-void Window::applyStyleSheet() {
-    _mainTitleBar->setStyleSheet("background-color: transparent;");
-    _contentArea->setStyleSheet("background-color: transparent;");
-}
-
-void Window::applyDWMEffects() {
-    /* Window Style Applying for Resizing*/
-    LONG style = GetWindowLong(hwnd, GWL_STYLE);
-    style |= WS_THICKFRAME | WS_CAPTION;
-    SetWindowLong(hwnd, GWL_STYLE, style);
-
-    const DWORD DWMWA_WINDOW_CORNER_PREFERENCE = 33;
-    enum DWM_WINDOW_CORNER_PREFERENCE {
-        DWMWCP_DEFAULT      = 0,
-        DWMWCP_DONOTROUND   = 1,
-        DWMWCP_ROUND        = 2,
-        DWMWCP_ROUNDSMALL   = 3
-    };
-
-    DWM_WINDOW_CORNER_PREFERENCE pref = DWMWCP_ROUND; 
-    DwmSetWindowAttribute(hwnd, DWMWA_WINDOW_CORNER_PREFERENCE, &pref, sizeof(pref));
-    
-    // Force Windows to recalculate the frame based on new styles
-    SetWindowPos(hwnd, nullptr, 0, 0, 0, 0, SWP_NOZORDER | SWP_NOMOVE | SWP_NOSIZE | SWP_FRAMECHANGED);
-}
-
-void Window::paintEvent(QPaintEvent *event) {
-    Q_UNUSED(event);
-    QColor BG = isDarkMode ? QColor("#1F1F1F") : QColor("#FFFFFF");
-    QPainter painter(this);
-    painter.setRenderHints(QPainter::Antialiasing);
-    painter.fillRect(rect(), BG);
-}
-
-Button * Window::createWindowButton() {
-    Button *b = new Button;
-    b->setSecondary(true);
-    b->setIconSize(QSize(16,16));
-    b->setDisplayMode(Button::IconOnly);
-    b->setFixedSize(QSize(30, 30));
-    return b;
-}
-
-void Window::setupWindow() {
     /* Title Bar */
     _mainTitleBar = new QWidget(this);
     _mainTitleBar->setFixedHeight(36);
     _mainTitleBar->setContentsMargins(0, 0, 0, 0);
     _mainTitleBar->setAttribute(Qt::WA_TranslucentBackground);
-    _mainTitleBar->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+    _mainTitleBar->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);    
+    _mainTitleBar->installEventFilter(this);
+    _mainTitleBar->setMouseTracking(true);
     
     /* Sub Title Bar */
     _subTitleBar = new QWidget;
@@ -93,7 +21,8 @@ void Window::setupWindow() {
     _subTitleBar->setContentsMargins(0, 0, 0, 0);
     _subTitleBar->setAttribute(Qt::WA_TranslucentBackground);
     _subTitleBar->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed); 
-    
+    _subTitleBar->setMouseTracking(true);
+
     /* Title Bar Main Layout*/
     _mainTitleBarLayout = new QHBoxLayout(_mainTitleBar);
     _mainTitleBarLayout->setContentsMargins(0, 0, 0, 0);
@@ -109,7 +38,7 @@ void Window::setupWindow() {
     setInteractiveTitleBarWidget(minimizeBtn);
     connect(minimizeBtn, &Button::clicked, this, &Window::onMinimizeClicked);
     
-    maximizeBtn = createWindowButton();
+    maximizeBtn = createWindowButton();    
     setInteractiveTitleBarWidget(maximizeBtn);
     connect(maximizeBtn, &Button::clicked, this, &Window::onMaximizeClicked);
 
@@ -118,39 +47,68 @@ void Window::setupWindow() {
     _mainTitleBarLayout->addWidget(maximizeBtn, 0, Qt::AlignRight);
     _mainTitleBarLayout->addSpacing(4);
     _mainTitleBarLayout->addWidget(closeBtn, 0, Qt::AlignRight);
-    _mainTitleBarLayout->addSpacing(4);
+    _mainTitleBarLayout->addSpacing(6);
 
-    /* Window Handle ID */
-    hwnd = reinterpret_cast<HWND>(winId());
-    applyDWMEffects();
+    /* Content Area */
+    _contentArea = new QWidget(this);
+    _contentArea->setContentsMargins(0, 0, 0, 0);
+    _contentArea->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    _contentArea->installEventFilter(this);
+    _contentArea->setMouseTracking(true);
+    setInteractiveTitleBarWidget(_contentArea);
 
-   /* Content Area */
-   _contentArea = new QWidget(this);
-   _contentArea->setContentsMargins(0, 0, 0, 0);
-   _contentArea->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    /* Entire Layout */
+    entireLayout = new QVBoxLayout;
+    entireLayout->setContentsMargins(4, 4, 4, 4);
+    entireLayout->setSpacing(0);
+    entireLayout->addWidget(_mainTitleBar, 0, Qt::AlignTop);
+    entireLayout->addWidget(_contentArea, 0);
+    setLayout(entireLayout);
 
-   /* Entire Layout */
-   entireLayout = new QVBoxLayout;
-   entireLayout->setContentsMargins(0, 0, 0, 0);
-   entireLayout->setSpacing(0);
-   entireLayout->addWidget(_mainTitleBar, 0, Qt::AlignTop);
-   entireLayout->addWidget(_contentArea, 0);
-   setLayout(entireLayout);
 
-   /* Apply Styles */
-   applyStyleSheet();
-   applyThemedIcons();
+    /* Apply Styles */
+    setDarkMode(isDarkMode);
+    setWindowControlsIcons();
+
+    /* Installing Event Filter */
+    installEventFilter(this);
 }
 
-void Window::onCloseClicked() { ::SendMessage(hwnd, WM_CLOSE, 0, 0); }
-void Window::onMinimizeClicked() { ::ShowWindow(hwnd, SW_MINIMIZE); }
-void Window::onMaximizeClicked() {
-    if (::IsZoomed(hwnd)) 
-        ::ShowWindow(hwnd, SW_RESTORE);
-    else 
-        ::ShowWindow(hwnd, SW_MAXIMIZE);
-    
-    applyThemedIcons();
+Button * Window::createWindowButton() {
+    Button *b = new Button;
+    b->setSecondary(true);
+    b->setIconSize(QSize(18, 18));
+    b->setDisplayMode(Button::IconOnly);
+    b->setCursor(Qt::PointingHandCursor);
+    b->setBorderTransparent(true);
+    b->setNormalBackgroundTransparent(true);
+    b->setDisplayMode(Button::IconOnly);
+    b->setFixedSize(QSize(26, 26));
+    return b;
+}
+
+void Window::setDarkMode(bool value) {
+    isDarkMode = value; 
+
+    for (Button *b : {closeBtn, minimizeBtn, maximizeBtn}) 
+        b->setDarkMode(isDarkMode);
+
+    QString style = QString("background-color: %1;").arg(isDarkMode ? "#1F1F1F" : "#FFFFFF");
+    _mainTitleBar->setStyleSheet(style);
+    _contentArea->setStyleSheet(style);
+
+    setWindowControlsIcons();
+    update(); 
+}
+
+void Window::setInteractiveTitleBarWidget(QWidget *widget) {
+    if (!widget) 
+        return;
+ 
+    if (interactiveWidgets.contains(widget)) 
+        return;
+
+    interactiveWidgets.insert(widget);
 }
 
 bool Window::isPointInsideInteractiveTitleBarWidgets(int x, int y) {
@@ -164,61 +122,185 @@ bool Window::isPointInsideInteractiveTitleBarWidgets(int x, int y) {
         if (widget->rect().contains(localPos)) 
             return true;
     }
+
     return false;
 }
 
-bool Window::nativeEvent(const QByteArray &, void *message, qintptr *result) {
-    MSG *msg = static_cast<MSG*>(message);
+void Window::setWindowControlsIcons() {
+    closeBtn->setIconPaths(closeIconLight, closeIconDark);
+    minimizeBtn->setIconPaths(minimizeIconLight, minimizeIconDark);
 
-    switch (msg->message) {
-    case WM_NCCALCSIZE:
-        return true;
+    update();
+    updateMaximizeIcon();
+}
 
-    case WM_NCHITTEST: {
-        RECT r;
-        GetWindowRect(msg->hwnd, &r);
+void Window::updateMaximizeIcon() {
+    QRect screenRect = screen()->availableGeometry();
 
-        int x = GET_X_LPARAM(msg->lParam);
-        int y = GET_Y_LPARAM(msg->lParam);
-        const int border = 8;
+    if (geometry() == screenRect) 
+        maximizeBtn->setIconPaths(restoreIconLight, restoreIconDark);
+    else 
+        maximizeBtn->setIconPaths(maximizeIconLight, maximizeIconDark);
+}
 
-        if (x < r.left + border && y < r.top + border) {
-            *result = HTTOPLEFT; return true;
-        }
-        if (x > r.right - border && y < r.top + border) {
-            *result = HTTOPRIGHT; return true;
-        }
-        if (x < r.left + border && y > r.bottom - border) {
-            *result = HTBOTTOMLEFT; return true;
-        }
-        if (x > r.right - border && y > r.bottom - border) {
-            *result = HTBOTTOMRIGHT; return true;
-        }
-        if (x < r.left + border) {
-            *result = HTLEFT; return true;
-        }
-        if (x > r.right - border) {
-            *result = HTRIGHT; return true;
-        }
-        if (y < r.top + border) {
-            *result = HTTOP; return true;
-        }
-        if (y > r.bottom - border) {
-            *result = HTBOTTOM; return true;
-        }
-        if (!isPointInsideInteractiveTitleBarWidgets(x, y)) {
-            *result = HTCAPTION; return true;
-        }
+void Window::onCloseClicked() { close(); }
+void Window::onMinimizeClicked() { showMinimized(); }
+void Window::onMaximizeClicked() {
+    QRect screenRect = screen()->availableGeometry();
 
-        return false;
+    if (geometry() == screenRect) {
+        if (normalGeometry.isValid()) {
+            setGeometry(normalGeometry);
+            showBorder = true;
+        } 
+    } else {
+        normalGeometry = geometry(); 
+        setGeometry(screenRect);   
+        showBorder = false;
     }
 
-    case WM_SIZE:
-        applyThemedIcons();
-        break;
+    update();
+    updateMaximizeIcon();
+}
+
+void Window::updateCursorForRegion(ResizeRegion region) {
+    switch (region) {
+        case ResizeRegion::Top:
+        case ResizeRegion::Bottom: setCursor(Qt::SizeVerCursor); break;
+        case ResizeRegion::Left:
+        case ResizeRegion::Right: setCursor(Qt::SizeHorCursor); break;
+        case ResizeRegion::TopLeft:
+        case ResizeRegion::BottomRight: setCursor(Qt::SizeFDiagCursor); break;
+        case ResizeRegion::TopRight:
+        case ResizeRegion::BottomLeft: setCursor(Qt::SizeBDiagCursor); break;
+        default: setCursor(Qt::ArrowCursor); break;
+    }
+}
+
+bool Window::eventFilter(QObject *obj, QEvent *event) {
+    if (obj == _mainTitleBar) {
+        if (event->type() == QEvent::MouseButtonDblClick) {
+            QMouseEvent *mouseEvent = static_cast<QMouseEvent*>(event);
+            if (mouseEvent->button() == Qt::LeftButton) {
+                onMaximizeClicked(); 
+                return true;          
+            }
+        }
     }
 
-    return false;
+
+    return QWidget::eventFilter(obj, event);
+}
+
+void Window::paintEvent(QPaintEvent *event) {
+    QPainter painter(this);
+    painter.setRenderHints(QPainter::Antialiasing);
+
+    QColor brushColor = isDarkMode ? QColor("#1F1F1F") : QColor("#FFFFFF");
+    QColor penColor   =  "#AFAFAF";
+
+    painter.setBrush(brushColor);
+
+    const int borderSize = 2;
+
+    if (showBorder) {
+        painter.setPen(QPen(penColor, 0.5));
+        painter.drawRoundedRect(rect().adjusted(borderSize, borderSize, -borderSize, -borderSize), 6, 6);
+    } else {
+        painter.setPen(Qt::NoPen);
+        painter.drawRect(rect());
+    }
+}
+
+Window::ResizeRegion Window::detectResizeRegion(const QPoint &pos) {
+    QRect r = rect();
+
+    bool onLeft = pos.x() <= resizeMargin;
+    bool onRight = pos.x() >= r.width() - resizeMargin;
+    bool onTop = pos.y() <= resizeMargin;
+    bool onBottom = pos.y() >= r.height() - resizeMargin;
+
+    if (onTop && onLeft) return ResizeRegion::TopLeft;
+    if (onTop && onRight) return ResizeRegion::TopRight;
+    if (onBottom && onLeft) return ResizeRegion::BottomLeft;
+    if (onBottom && onRight) return ResizeRegion::BottomRight;
+    if (onTop) return ResizeRegion::Top;
+    if (onBottom) return ResizeRegion::Bottom;
+    if (onLeft) return ResizeRegion::Left;
+    if (onRight) return ResizeRegion::Right;
+
+    return ResizeRegion::None;
+}
+
+void Window::mouseMoveEvent(QMouseEvent *event) {
+    QPoint pos = event->position().toPoint();
+    ResizeRegion region = detectResizeRegion(pos);
+
+    // Always update the cursor
+    updateCursorForRegion(region);
+
+    // Store current region
+    currentResizeRegion = region;
+
+    // Call base class for normal processing
+    QWidget::mouseMoveEvent(event);
+}
+
+void Window::mousePressEvent(QMouseEvent *event) {
+    if (event->button() != Qt::LeftButton) {
+        QWidget::mousePressEvent(event);
+        return;
+    }
+
+    if (currentResizeRegion != ResizeRegion::None) {
+        if (windowHandle()) {
+            Qt::Edges edges = Qt::Edges();
+            switch (currentResizeRegion) {
+                case ResizeRegion::Left: edges = Qt::LeftEdge; break;
+                case ResizeRegion::Right: edges = Qt::RightEdge; break;
+                case ResizeRegion::Top: edges = Qt::TopEdge; break;
+                case ResizeRegion::Bottom: edges = Qt::BottomEdge; break;
+                case ResizeRegion::TopLeft: edges = Qt::TopEdge | Qt::LeftEdge; break;
+                case ResizeRegion::TopRight: edges = Qt::TopEdge | Qt::RightEdge; break;
+                case ResizeRegion::BottomLeft: edges = Qt::BottomEdge | Qt::LeftEdge; break;
+                case ResizeRegion::BottomRight: edges = Qt::BottomEdge | Qt::RightEdge; break;
+                default: break;
+            }
+
+            windowHandle()->startSystemResize(edges);
+        }
+
+    } else if (_mainTitleBar->geometry().contains(event->pos()) && 
+                !isPointInsideInteractiveTitleBarWidgets(event->position().x(), event->position().y()))
+    {
+        if (windowHandle())
+            windowHandle()->startSystemMove();
+    }
+
+    QWidget::mousePressEvent(event);
+}
+
+void Window::leaveEvent(QEvent *event) {
+    currentResizeRegion = ResizeRegion::None;
+    setCursor(Qt::ArrowCursor);
+
+    QWidget::leaveEvent(event);
+}
+
+void Window::showEvent(QShowEvent *event) {
+    QWidget::showEvent(event);
+
+    showBorder = true;
+
+    update();
+    updateMaximizeIcon();
+}
+
+void Window::changeEvent(QEvent *event) {
+    if (event->type() == QEvent::WindowStateChange)
+        updateMaximizeIcon();
+
+    QWidget::changeEvent(event);
 }
 
 QWidget* Window::titleBar() const { return _subTitleBar; }
