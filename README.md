@@ -1,4 +1,4 @@
-# QtNovaFramelessWindow
+# QtNovaFramelessWindow - Windows, MacOS, and Linux (Single Codebase)
 
 **QtNovaFramelessWindow** is a Qt-based replacement for the native system window frame. It provides a fully custom **title bar**, **window controls** (close, minimize, maximize), support for **resizing**, and **dark mode** theming.
 
