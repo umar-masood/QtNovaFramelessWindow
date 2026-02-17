@@ -1,14 +1,14 @@
 #pragma once
-#include <QWidget>
-#include "components/Button.h"
-#include <dwmapi.h>
-#include <windowsx.h>
-#include <windows.h>
+
+#include "../../components/Button.h"
+
 #include <QWindow>
 #include <QHBoxLayout>
 #include <QObject>
 #include <QPoint>
 #include <QSet>
+#include <QResizeEvent>
+#include <QWidget>
 
 class Window : public QWidget {
     Q_OBJECT
@@ -17,6 +17,19 @@ class Window : public QWidget {
     explicit Window( QWidget *parent = nullptr);
     virtual ~Window() = default;
 
+    enum class ResizeRegion {
+        None,
+        Left,
+        Top,
+        Right,
+        Bottom,
+        TopLeft,
+        TopRight,
+        BottomLeft,
+        BottomRight
+    };
+
+
     void setDarkMode(bool value);
     void setInteractiveTitleBarWidget(QWidget *widget);
 
@@ -24,25 +37,41 @@ class Window : public QWidget {
     QWidget* contentArea() const;
 
     protected:
+    bool eventFilter(QObject *obj, QEvent *event);
     void paintEvent(QPaintEvent *event) override;
-    bool nativeEvent(const QByteArray &eventType, void *message, qintptr *result) override;
+    void changeEvent(QEvent *event) override;
+    void showEvent(QShowEvent *event) override;
+    void mouseMoveEvent(QMouseEvent *event) override;
+    void mousePressEvent(QMouseEvent *event) override;
+    void leaveEvent(QEvent *event);
 
     private:
+    // Window Border
+    bool showBorder = false;
+    
+    // Maximize / Restore
+    QRect normalGeometry; 
 
-    // Current Window Handle (ID)
-    HWND hwnd;
+   // Icons
+    QString closeIconLight      = ":/icons/win-close-light.svg"; 
+    QString closeIconDark       = ":/icons/win-close-dark.svg"; 
+    QString minimizeIconLight   = ":/icons/win-minimize-light.svg"; 
+    QString minimizeIconDark    = ":/icons/win-minimize-dark.svg";
+    QString maximizeIconLight   = ":/icons/win-maximize-light.svg"; 
+    QString maximizeIconDark    = ":/icons/win-maximize-dark.svg";
+    QString restoreIconLight    = ":/icons/win-restore-light.svg";
+    QString restoreIconDark     = ":/icons/win-restore-dark.svg";
 
     // Set Window Controls Icons
-    void applyThemedIcons();
+    void setWindowControlsIcons();
+    void updateMaximizeIcon();
 
-    // Set Window Widgets theme
-    void applyStyleSheet();
-
-    // Apply DWM Effects such as rounded corners, shadow etc.
-    void applyDWMEffects();
-
-    // Setup whole window
-    void setupWindow();
+    // Window Resizing 
+    void updateCursorForRegion(ResizeRegion region);
+    ResizeRegion detectResizeRegion(const QPoint &pos);
+    
+    ResizeRegion currentResizeRegion = ResizeRegion::None;
+    const int resizeMargin = 4;
 
     // Check weather the current coordinates lie inside titlebar interactive widgets
     bool isPointInsideInteractiveTitleBarWidgets(int x, int y);
