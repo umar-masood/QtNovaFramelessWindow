@@ -4,6 +4,8 @@
 #include <QPaintEvent>
 #include <QFile>
 
+using ResizeRegion = WindowPrivate::ResizeRegion;
+
 Window::Window(QWidget *parent) : QWidget(parent), m_d(std::make_unique<WindowPrivate>()) {
     /* Window Properties */
     setAttribute(Qt::WA_TranslucentBackground);
@@ -25,6 +27,7 @@ Window::Window(QWidget *parent) : QWidget(parent), m_d(std::make_unique<WindowPr
     /* Title Bar Main Layout*/
     m_d->mainTitleBarLayout = new QHBoxLayout(m_d->mainTitleBar);
     m_d->mainTitleBarLayout->setSpacing(0);
+    m_d->mainTitleBarLayout->setContentsMargins(0, 0, 0, 0);
     m_d->mainTitleBarLayout->addWidget(m_d->subTitleBar);
 
     /* Window Buttons */
@@ -49,6 +52,7 @@ Window::Window(QWidget *parent) : QWidget(parent), m_d(std::make_unique<WindowPr
 
     /* Content Area */
     m_d->contentArea = new QWidget(this);
+    m_d->contentArea->setContentsMargins(0, 0, 0, 0);
     m_d->contentArea->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 
     /* Entire Layout */
@@ -161,16 +165,16 @@ void Window::onMaximizeClicked() {
     updateMaximizeIcon();
 }
 
-void Window::updateCursorForRegion(WindowPrivate::ResizeRegion region) {
+void Window::updateCursorForRegion(ResizeRegion region) {
     switch (region) {
-        case WindowPrivate::ResizeRegion::Top:
-        case WindowPrivate::ResizeRegion::Bottom:        setCursor(Qt::SizeVerCursor);   break;
-        case WindowPrivate::ResizeRegion::Left:
-        case WindowPrivate::ResizeRegion::Right:         setCursor(Qt::SizeHorCursor);   break;
-        case WindowPrivate::ResizeRegion::TopLeft:
-        case WindowPrivate::ResizeRegion::BottomRight:   setCursor(Qt::SizeFDiagCursor); break;
-        case WindowPrivate::ResizeRegion::TopRight:
-        case WindowPrivate::ResizeRegion::BottomLeft:    setCursor(Qt::SizeBDiagCursor); break;
+        case ResizeRegion::Top:
+        case ResizeRegion::Bottom:        setCursor(Qt::SizeVerCursor);   break;
+        case ResizeRegion::Left:
+        case ResizeRegion::Right:         setCursor(Qt::SizeHorCursor);   break;
+        case ResizeRegion::TopLeft:
+        case ResizeRegion::BottomRight:   setCursor(Qt::SizeFDiagCursor); break;
+        case ResizeRegion::TopRight:
+        case ResizeRegion::BottomLeft:    setCursor(Qt::SizeBDiagCursor); break;
         default:                                         unsetCursor();                  break;
     }
 }
@@ -184,39 +188,37 @@ bool Window::eventFilter(QObject *obj, QEvent *event) {
             return QWidget::eventFilter(obj, event);
 
         if (m_d->normalWindow && rect().contains(windowPos)) {
-            WindowPrivate::ResizeRegion region = detectResizeRegion(windowPos);
+            ResizeRegion region = detectResizeRegion(windowPos);
             updateCursorForRegion(region);
             m_d->currentResizeRegion = region;
 
         } else if (m_d->normalWindow) {
             unsetCursor();
-            m_d->currentResizeRegion = WindowPrivate::ResizeRegion::None;
+            m_d->currentResizeRegion = ResizeRegion::None;
         }
     }
 
-    if (obj == m_d->mainTitleBar) {
-        if (event->type() == QEvent::MouseButtonDblClick) {
-            QMouseEvent *mouseEvent = static_cast<QMouseEvent*>(event);
-            if (mouseEvent->button() == Qt::LeftButton) {
-                onMaximizeClicked();
-                return true;
-            }
+    if (event->type() == QEvent::MouseButtonDblClick && obj == m_d->mainTitleBar) {
+        QMouseEvent *mouseEvent = static_cast<QMouseEvent*>(event);
+        if (mouseEvent->button() == Qt::LeftButton) {
+            onMaximizeClicked();
+            return true;
         }
     }
 
     if (m_d->interactionBlocked) {
         switch (event->type()) {
-        case QEvent::MouseButtonPress:
-        case QEvent::MouseButtonRelease:
-        case QEvent::MouseMove:
-        case QEvent::MouseButtonDblClick:
-        case QEvent::Wheel:
-        case QEvent::KeyPress:
-        case QEvent::KeyRelease:
-            return true; // Fully block
-            
-        default:
-            break;
+            case QEvent::MouseButtonPress:
+            case QEvent::MouseButtonRelease:
+            case QEvent::MouseMove:
+            case QEvent::MouseButtonDblClick:
+            case QEvent::Wheel:
+            case QEvent::KeyPress:
+            case QEvent::KeyRelease:
+                return true; // Fully block
+
+            default:
+                break;
         }
     }
 
@@ -239,7 +241,7 @@ void Window::paintEvent(QPaintEvent *event) {
     }
 }
 
-WindowPrivate::ResizeRegion Window::detectResizeRegion(const QPoint &pos) {
+ResizeRegion Window::detectResizeRegion(const QPoint &pos) {
     const QRect r = rect();
 
     bool onLeft     = pos.x() <= m_d->resizeMargin;
@@ -247,16 +249,16 @@ WindowPrivate::ResizeRegion Window::detectResizeRegion(const QPoint &pos) {
     bool onTop      = pos.y() <= m_d->resizeMargin;
     bool onBottom   = pos.y() >= r.height() - m_d->resizeMargin;
 
-    if (onTop && onLeft)        return WindowPrivate::ResizeRegion::TopLeft;
-    if (onTop && onRight)       return WindowPrivate::ResizeRegion::TopRight;
-    if (onBottom && onLeft)     return WindowPrivate::ResizeRegion::BottomLeft;
-    if (onBottom && onRight)    return WindowPrivate::ResizeRegion::BottomRight;
-    if (onTop)                  return WindowPrivate::ResizeRegion::Top;
-    if (onBottom)               return WindowPrivate::ResizeRegion::Bottom;
-    if (onLeft)                 return WindowPrivate::ResizeRegion::Left;
-    if (onRight)                return WindowPrivate::ResizeRegion::Right;
+    if (onTop && onLeft)        return ResizeRegion::TopLeft;
+    if (onTop && onRight)       return ResizeRegion::TopRight;
+    if (onBottom && onLeft)     return ResizeRegion::BottomLeft;
+    if (onBottom && onRight)    return ResizeRegion::BottomRight;
+    if (onTop)                  return ResizeRegion::Top;
+    if (onBottom)               return ResizeRegion::Bottom;
+    if (onLeft)                 return ResizeRegion::Left;
+    if (onRight)                return ResizeRegion::Right;
 
-    return WindowPrivate::ResizeRegion::None;
+    return ResizeRegion::None;
 }
 
 void Window::mouseMoveEvent(QMouseEvent *event) {
@@ -265,14 +267,7 @@ void Window::mouseMoveEvent(QMouseEvent *event) {
         move(m_d->dragStartWindowPos + delta);
         return; 
     }
-
-    if (m_d->normalWindow) {
-        QPoint pos = event->position().toPoint();
-        WindowPrivate::ResizeRegion region = detectResizeRegion(pos);
-        updateCursorForRegion(region);
-        m_d->currentResizeRegion = region;
-    }
-
+    
     QWidget::mouseMoveEvent(event);
 }
 
@@ -290,19 +285,19 @@ void Window::mousePressEvent(QMouseEvent *event) {
     }
 
     // Resize
-    if (m_d->normalWindow && m_d->currentResizeRegion != WindowPrivate::ResizeRegion::None) {
+    if (m_d->normalWindow && m_d->currentResizeRegion != ResizeRegion::None) {
         if (windowHandle()) {
             Qt::Edges edges;
 
             switch (m_d->currentResizeRegion) {
-                case WindowPrivate::ResizeRegion::Left:        edges = Qt::LeftEdge; break;
-                case WindowPrivate::ResizeRegion::Right:       edges = Qt::RightEdge; break;
-                case WindowPrivate::ResizeRegion::Top:         edges = Qt::TopEdge; break;
-                case WindowPrivate::ResizeRegion::Bottom:      edges = Qt::BottomEdge; break;
-                case WindowPrivate::ResizeRegion::TopLeft:     edges = Qt::TopEdge | Qt::LeftEdge; break;
-                case WindowPrivate::ResizeRegion::TopRight:    edges = Qt::TopEdge | Qt::RightEdge; break;
-                case WindowPrivate::ResizeRegion::BottomLeft:  edges = Qt::BottomEdge | Qt::LeftEdge; break;
-                case WindowPrivate::ResizeRegion::BottomRight: edges = Qt::BottomEdge | Qt::RightEdge; break;
+                case ResizeRegion::Left:        edges = Qt::LeftEdge; break;
+                case ResizeRegion::Right:       edges = Qt::RightEdge; break;
+                case ResizeRegion::Top:         edges = Qt::TopEdge; break;
+                case ResizeRegion::Bottom:      edges = Qt::BottomEdge; break;
+                case ResizeRegion::TopLeft:     edges = Qt::TopEdge | Qt::LeftEdge; break;
+                case ResizeRegion::TopRight:    edges = Qt::TopEdge | Qt::RightEdge; break;
+                case ResizeRegion::BottomLeft:  edges = Qt::BottomEdge | Qt::LeftEdge; break;
+                case ResizeRegion::BottomRight: edges = Qt::BottomEdge | Qt::RightEdge; break;
                 default: break;
             }
 
@@ -325,7 +320,7 @@ void Window::mousePressEvent(QMouseEvent *event) {
 }
 
 void Window::leaveEvent(QEvent *event) {
-    m_d->currentResizeRegion = WindowPrivate::ResizeRegion::None;
+    m_d->currentResizeRegion = ResizeRegion::None;
     unsetCursor();
 
     QWidget::leaveEvent(event);
@@ -352,12 +347,12 @@ void Window::resizeEvent(QResizeEvent *event) {
 
     QPoint localPos = mapFromGlobal(QCursor::pos());
     if (rect().contains(localPos) && m_d->normalWindow) {
-        WindowPrivate::ResizeRegion region = detectResizeRegion(localPos);
+        ResizeRegion region = detectResizeRegion(localPos);
         updateCursorForRegion(region);
         m_d->currentResizeRegion = region;
     } else {
         unsetCursor();
-        m_d->currentResizeRegion = WindowPrivate::ResizeRegion::None;
+        m_d->currentResizeRegion = ResizeRegion::None;
     }
 }
 
