@@ -13,20 +13,17 @@ Window::Window(QWidget *parent) : QWidget(parent), m_d(std::make_unique<WindowPr
     /* Title Bar */
     m_d->mainTitleBar = new QWidget(this);
     m_d->mainTitleBar->setFixedHeight(36);
-    m_d->mainTitleBar->setContentsMargins(0, 0, 0, 0);
     m_d->mainTitleBar->setAttribute(Qt::WA_TranslucentBackground);
     m_d->mainTitleBar->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);    
     
     /* Sub Title Bar */
     m_d->subTitleBar = new QWidget;
     m_d->subTitleBar->setFixedHeight(36);
-    m_d->subTitleBar->setContentsMargins(0, 0, 0, 0);
     m_d->subTitleBar->setAttribute(Qt::WA_TranslucentBackground);
     m_d->subTitleBar->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed); 
 
     /* Title Bar Main Layout*/
     m_d->mainTitleBarLayout = new QHBoxLayout(m_d->mainTitleBar);
-    m_d->mainTitleBarLayout->setContentsMargins(0, 0, 0, 0);
     m_d->mainTitleBarLayout->setSpacing(0);
     m_d->mainTitleBarLayout->addWidget(m_d->subTitleBar);
 
@@ -52,9 +49,7 @@ Window::Window(QWidget *parent) : QWidget(parent), m_d(std::make_unique<WindowPr
 
     /* Content Area */
     m_d->contentArea = new QWidget(this);
-    m_d->contentArea->setContentsMargins(0, 0, 0, 0);
     m_d->contentArea->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-    setInteractiveTitleBarWidget(m_d->contentArea);
 
     /* Entire Layout */
     m_d->entireLayout = new QVBoxLayout;
@@ -66,7 +61,6 @@ Window::Window(QWidget *parent) : QWidget(parent), m_d(std::make_unique<WindowPr
 
     /* Apply Styles */
     setDarkMode(m_d->darkMode);
-    setWindowButtonsIcons();
 
     /* Installing Event Filter */
     qApp->installEventFilter(this);
@@ -86,7 +80,7 @@ void Window::setDarkMode(bool dark) {
     for (WinButton *b : {m_d->closeBtn, m_d->minimizeBtn, m_d->maximizeBtn}) 
         b->setDarkMode(dark);
 
-    QString style = QString("background-color: %1;").arg(darkMode() ? "#1F1F1F" : "#FFFFFF");
+    QString style = QString("background-color: %1;").arg(dark ? "#1F1F1F" : "#FFFFFF");
     m_d->mainTitleBar->setStyleSheet(style);
     m_d->contentArea->setStyleSheet(style);
 
