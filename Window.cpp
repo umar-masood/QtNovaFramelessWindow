@@ -129,11 +129,13 @@ void Window::setModal(bool enable) {
     if (m_d->modal)
         setCursor(Qt::ArrowCursor);
 
-    if (!m_d->overlay->isVisible()) {
+    if (enable && !m_d->overlay->isVisible()) {
         m_d->overlay->setGeometry(rect());
         m_d->overlay->raise();
         m_d->overlay->show();
-    }
+    } else {
+        m_d->overlay->hide();
+    } 
 }
 
 void Window::setBorderColor(const QColor &color) {
