@@ -82,8 +82,22 @@ window->setInteractiveTitleBarWidget(btn);
 ```cpp
 w->setDarkMode(true);
 ```
-## 🤝 Contributing
 
+## Changing Border Color
+```cpp
+w->setBorderColor(QColor("#FF8080"));
+```
+
+## Changing Background Color
+```cpp
+w->setBackgroundColor(QColor("#FF2054"), QColor("#3F85B6"));
+```
+> [!IMPORTANT]
+> The first argument of this function represents the color in Light Mode while other represents color in Dark Mode: 
+> `window.setBackgroundColor(const QColor &light, const QColor &dark)`;
+
+
+## 🤝 Contributing
 1. Fork the repository.
 2. Create a new branch for your change.
 3. Follow the existing code style and structure.

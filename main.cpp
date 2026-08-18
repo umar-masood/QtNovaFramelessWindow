@@ -12,6 +12,7 @@ int main(int argc, char *argv[])
 
     Window window;
     window.resize(900, 600);
+    window.setBackgroundColor("#FF8088", "#FF1235");
 
     // --------------------------------------------------
     // Content
