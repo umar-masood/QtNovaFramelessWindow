@@ -96,6 +96,13 @@ w->setBackgroundColor(QColor("#FF2054"), QColor("#3F85B6"));
 > The first argument of this function represents the color in Light Mode while other represents color in Dark Mode: 
 > `window.setBackgroundColor(const QColor &light, const QColor &dark)`;
 
+## Modal Window
+```cpp
+w->setModal(true);
+```
+> [!NOTE]
+> It will block all interaction with window.
+
 
 ## 🤝 Contributing
 1. Fork the repository.
