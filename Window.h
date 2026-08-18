@@ -46,8 +46,10 @@ class WinButton : public QPushButton {
 struct WindowPrivate {
     bool darkMode = false;
 
-    // Border
+    // Border, Background
     QColor borderColor = QColor("#D0D0D0");
+    QColor backgroundColorLight = QColor("#FFFFFF");
+    QColor backgroundColorDark = QColor("#1F1F1F");
 
     // Maximize / Restore / Normal
     bool normalWindow = false;
@@ -110,6 +112,7 @@ class Window : public QWidget {
     void setInteractiveTitleBarWidget(QWidget *widget);
     void setInteractionBlocked(bool enable);
     void setBorderColor(const QColor &color);
+    void setBackgroundColor(const QColor &light, const QColor &dark);
 
     QWidget* titleBar() const;
     QWidget* contentArea() const;

@@ -53,6 +53,7 @@ Window::Window(QWidget *parent) : QWidget(parent), m_d(std::make_unique<WindowPr
     /* Content Area */
     m_d->contentArea = new QWidget(this);
     m_d->contentArea->setContentsMargins(0, 0, 0, 0);
+    m_d->contentArea->setAttribute(Qt::WA_TranslucentBackground);
     m_d->contentArea->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 
     /* Entire Layout */
@@ -126,6 +127,12 @@ void Window::setInteractionBlocked(bool enable) {
 
 void Window::setBorderColor(const QColor &color) {
     m_d->borderColor = color;
+    update();
+}
+
+void Window::setBackgroundColor(const QColor &light, const QColor &dark) {
+    m_d->backgroundColorLight = light;
+    m_d->backgroundColorDark = dark;
     update();
 }
 
@@ -229,8 +236,7 @@ void Window::paintEvent(QPaintEvent *event) {
     QPainter painter(this);
     painter.setRenderHints(QPainter::Antialiasing);
 
-    const QColor brushColor = darkMode() ? QColor("#1F1F1F") : QColor("#FFFFFF");
-    painter.setBrush(brushColor);
+    painter.setBrush(darkMode() ? m_d->backgroundColorDark : m_d->backgroundColorLight);
 
     if (m_d->normalWindow) {
         painter.setPen(QPen(m_d->borderColor, 0.5));
