@@ -16,7 +16,6 @@ Window::Window(QWidget *parent) : QWidget(parent), m_d(std::make_unique<WindowPr
     m_d->mainTitleBar->setContentsMargins(0, 0, 0, 0);
     m_d->mainTitleBar->setAttribute(Qt::WA_TranslucentBackground);
     m_d->mainTitleBar->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);    
-    m_d->mainTitleBar->installEventFilter(this);
     
     /* Sub Title Bar */
     m_d->subTitleBar = new QWidget;
@@ -55,7 +54,6 @@ Window::Window(QWidget *parent) : QWidget(parent), m_d(std::make_unique<WindowPr
     m_d->contentArea = new QWidget(this);
     m_d->contentArea->setContentsMargins(0, 0, 0, 0);
     m_d->contentArea->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-    m_d->contentArea->installEventFilter(this);
     setInteractiveTitleBarWidget(m_d->contentArea);
 
     /* Entire Layout */
@@ -71,7 +69,6 @@ Window::Window(QWidget *parent) : QWidget(parent), m_d(std::make_unique<WindowPr
     setWindowButtonsIcons();
 
     /* Installing Event Filter */
-    installEventFilter(this);
     qApp->installEventFilter(this);
 }
 
@@ -114,6 +111,7 @@ bool Window::isPointInsideInteractiveTitleBarWidgets(int x, int y) {
             continue;
 
         const QPoint localPos = widget->mapFromGlobal(globalPos);
+
         if (widget->rect().contains(localPos)) 
             return true;
     }
@@ -142,7 +140,7 @@ void Window::setWindowButtonsIcons() {
 }
 
 void Window::updateMaximizeIcon() {
-    QRect screenRect = screen()->availableGeometry();
+    const QRect screenRect = screen()->availableGeometry();
 
     if (geometry() == screenRect) 
         m_d->maximizeBtn->setIconPaths(":/icons/win-restore-light.svg", ":/icons/win-restore-dark.svg");
@@ -158,6 +156,7 @@ void Window::onMaximizeClicked() {
             setGeometry(m_d->normalGeometry);
             m_d->normalWindow = true;
         } 
+        
     } else {
         m_d->normalGeometry = geometry(); 
         setGeometry(screenRect);
@@ -447,15 +446,19 @@ bool WinButton::event(QEvent *event) {
     switch (event->type()) {
         case QEvent::Enter:
             m_d->hovered = true;
+            update();
             break;
         case QEvent::Leave:
             m_d->hovered = false;
+            update();
             break;
         case QEvent::MouseButtonPress:
             m_d->pressed = true;
+            update();
             break;
         case QEvent::MouseButtonRelease:
             m_d->pressed = false;
+            update();
             break;
     }
 
