@@ -28,16 +28,7 @@
 
 `resources.qrc`
 
-`components/Button.h`
-
-> [!IMPORTANT]
-> This customized window uses a custom `Button` component, make sure that component must be present in its folder. To get custom Button component, check out our `QtNovaUI` repo on GitHub.
-
-> [!IMPORTANT]
-> Must include `Button.h` dependencies which includes `SmoothOpacity.cpp/.h`, `SmoothShadow.cpp/h`, `SpinnerProgress.cpp/.h`.
-
 ## 🚀 Usage
-
 ### Include in your project
 1. Copy `Window.h` and `Window.cpp` into your project’s `src/` folder.
 2. Include the header in your code:
