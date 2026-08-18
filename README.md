@@ -1,4 +1,4 @@
-# QtNovaFramelessWindow
+# QtNovaFramelessWindow - Windows, MacOS, and Linux (Single Codebase)
 
 **QtNovaFramelessWindow** is a Qt-based replacement for the native system window frame. It provides a fully custom **title bar**, **window controls** (close, minimize, maximize), support for **resizing**, and **dark mode** theming.
 
@@ -11,6 +11,30 @@
 - Active/inactive state highlighting.
 - Embeddable content area for your application UI.
 - Interactive custom widgets in title bar (clickable property support).
+
+## Use of this Custom Frame Window in `Vaultorix`:
+<img width="1365" height="765" alt="image" src="https://github.com/user-attachments/assets/7a0e0037-9866-4422-8a11-139093496573" />
+<img width="1365" height="767" alt="image" src="https://github.com/user-attachments/assets/2df7f112-548a-47e0-ad7b-4edf85e0af91" />
+
+
+## 📦 File Structure
+**QtNovaFramelessWindow/**
+
+`Window.h`  
+
+`Window.cpp`  
+
+`CMakeLists.txt`
+
+`resources.qrc`
+
+`components/Button.h`
+
+> [!IMPORTANT]
+> This customized window uses a custom `Button` component, make sure that component must be present in its folder. To get custom Button component, check out our `QtNovaUI` repo on GitHub.
+
+> [!IMPORTANT]
+> Must include `Button.h` dependencies which includes `SmoothOpacity.cpp/.h`, `SmoothShadow.cpp/h`, `SpinnerProgress.cpp/.h`.
 
 ## 🚀 Usage
 
@@ -26,34 +50,55 @@ int main(int argc, char *argv[]) {
     QApplication app(argc, argv);
 
     // Create custom window
-    Window w;
-    w.setGeometry(100, 100, 800, 600);
-    w.show();
+    Window *w = new Window;
+    w->setGeometry(100, 100, 800, 600);
+    w->show();
+
     return app.exec();
 }
 ```
-### You can add your own widgets into the window’s content area like this:
-> [!IMPORTANT]
-> In order to add widget into the content area of window, then you must pass frameless custom window `contentArea()` to the constructor of a widget as a parent.
 
+## 🧱 Adding Application UI (Content Area)
 ```cpp
-QPushButton *btn = new QPushButton("Click Me", window.contentArea());
-QVBoxLayout *layout = new QVBoxLayout(window.contentArea());
+QVBoxLayout *layout = new QVBoxLayout(window->contentArea());
+QPushButton *btn = new QPushButton("Click Me");
 layout->addWidget(btn);
 ```
-
-### You can add interactive widgets into Custom Title bar
 > [!IMPORTANT]
-> If you want to add widget into the custom tilebar of frameless custom window then pass window `customTitleBarArea()` to the constructor of that widget as a parent.
+> All application widgets must be parented to the window’s content area.
+
+> [!WARNING]
+> `QPushButton *btn = new QPushButton("Click Me", window);`
+> 
+> Passing window as a parent directly will break layout, resizing and hit-testing
+
+## Custom Title Bar Widgets
 ```cpp
-    // Adding a button into custom title bar (interactive)
-    QPushButton *titleBtn = new QPushButton("Title Action", w.customTitleBarArea());
-    titleBtn->setProperty("clickable widget", true);  // Mark as clickable
-    w.titleBarLayout()->addWidget(titleBtn);
+// Adding Widgets to the Title Bar
+QHBoxLayout *layout = new QHBoxLayout(window->titleBar());
+QPushButton *btn = new QPushButton("Action");
+layout->addWidget(btn);
+window->setInteractiveTitleBarWidget(btn);
 ```
 > [!IMPORTANT]
-> The custom title bar can hold widgets, but by default, the whole title bar is treated as draggable space. To make a widget clickable (interactive), you must set:
-> ```cpp
-> myWidget->setProperty("clickable widget", true);
-> ```
-> If not set, the widget will be considered part of the draggable title bar.
+> To make a widget interactive then must pass that widget to this function: 
+> `window.setInteractiveTitleBarWidget(myWidget)`;
+
+> [!NOTE]
+> `window.setInteractiveTitleBarWidget(myWidget)` will automatically ignore the widget if that widget is already passed to this function.
+
+## Dark Theme Mode
+```cpp
+w->setDarkMode(true);
+```
+## 🤝 Contributing
+
+1. Fork the repository.
+2. Create a new branch for your change.
+3. Follow the existing code style and structure.
+4. Do not break window dragging, resizing, or title bar behavior.
+5. Test your changes before committing.
+6. Write clear commit messages.
+7. Update documentation if behavior changes.
+8. Push your branch to your fork.
+9. Open a pull request against the main branch.
