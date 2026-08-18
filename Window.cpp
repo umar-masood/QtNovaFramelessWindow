@@ -181,26 +181,6 @@ void Window::updateCursorForRegion(WindowPrivate::ResizeRegion region) {
     }
 }
 
-bool Window::event(QEvent *event) {
-    // if (m_d->interactionBlocked) {
-    //     switch (event->type()) {
-    //     case QEvent::MouseButtonPress:
-    //     case QEvent::MouseButtonRelease:
-    //     case QEvent::MouseMove:
-    //     case QEvent::MouseButtonDblClick:
-    //     case QEvent::Wheel:
-    //     case QEvent::KeyPress:
-    //     case QEvent::KeyRelease:
-    //         return true; // Fully block
-            
-    //     default:
-    //         break;
-    //     }
-    // }
-
-    return QWidget::event(event);
-}
-
 bool Window::eventFilter(QObject *obj, QEvent *event) {
     if (event->type() == QEvent::MouseMove) {
         QMouseEvent *mouseEvent = static_cast<QMouseEvent*>(event);
