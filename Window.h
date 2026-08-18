@@ -124,7 +124,6 @@ class Window : public QWidget {
     void mousePressEvent(QMouseEvent *event) override;
     void leaveEvent(QEvent *event);
     void resizeEvent(QResizeEvent *event);
-    bool event(QEvent *event) override;
 
     private:
     std::unique_ptr<WindowPrivate> m_d = nullptr;
