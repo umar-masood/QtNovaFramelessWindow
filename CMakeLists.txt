@@ -15,4 +15,3 @@ add_executable(QtNovaFramelessWindow
 )
 
 target_link_libraries(QtNovaFramelessWindow PRIVATE Qt6::Widgets Qt6::Gui Qt6::Core)
-

@@ -138,5 +138,5 @@ class Window : public QWidget {
     bool isPointInsideInteractiveTitleBarWidgets(int x, int y);
 
     private slots:
-    void onMaximizeClicked();
+    void maximizedClicked();
 };

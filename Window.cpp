@@ -41,7 +41,7 @@ Window::Window(QWidget *parent) : QWidget(parent), m_d(std::make_unique<WindowPr
     
     m_d->maximizeBtn = createWindowButton();
     setInteractiveTitleBarWidget(m_d->maximizeBtn);
-    connect(m_d->maximizeBtn, &WinButton::clicked, this, &Window::onMaximizeClicked);
+    connect(m_d->maximizeBtn, &WinButton::clicked, this, &Window::maximizedClicked);
 
     m_d->mainTitleBarLayout->addWidget(m_d->minimizeBtn, 0, Qt::AlignRight);
     m_d->mainTitleBarLayout->addSpacing(4);
@@ -146,7 +146,7 @@ void Window::updateMaximizeIcon() {
         m_d->maximizeBtn->setIconPaths(":/icons/win-maximize-light.svg", ":/icons/win-maximize-dark.svg");
 }
 
-void Window::onMaximizeClicked() {
+void Window::maximizedClicked() {
     QRect screenRect = screen()->availableGeometry();
 
     if (geometry() == screenRect) {
@@ -201,7 +201,7 @@ bool Window::eventFilter(QObject *obj, QEvent *event) {
     if (event->type() == QEvent::MouseButtonDblClick && obj == m_d->mainTitleBar) {
         QMouseEvent *mouseEvent = static_cast<QMouseEvent*>(event);
         if (mouseEvent->button() == Qt::LeftButton) {
-            onMaximizeClicked();
+            maximizedClicked();
             return true;
         }
     }
@@ -267,7 +267,7 @@ void Window::mouseMoveEvent(QMouseEvent *event) {
         move(m_d->dragStartWindowPos + delta);
         return; 
     }
-    
+
     QWidget::mouseMoveEvent(event);
 }
 
@@ -308,6 +308,7 @@ void Window::mousePressEvent(QMouseEvent *event) {
         return;
     }
 
+    // Dragging
     if (m_d->mainTitleBar->geometry().contains(event->pos()) &&
         !isPointInsideInteractiveTitleBarWidgets(event->position().x(), event->position().y()))
     {
@@ -346,6 +347,7 @@ void Window::resizeEvent(QResizeEvent *event) {
     QWidget::resizeEvent(event);
 
     QPoint localPos = mapFromGlobal(QCursor::pos());
+
     if (rect().contains(localPos) && m_d->normalWindow) {
         ResizeRegion region = detectResizeRegion(localPos);
         updateCursorForRegion(region);
@@ -367,7 +369,6 @@ QWidget* Window::titleBar() const {
 QWidget* Window::contentArea() const { 
     return m_d->contentArea; 
 }
-
 
 // -------------- Window Button --------------
 WinButton::WinButton(QWidget *parent) : QPushButton(parent) {
