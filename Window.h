@@ -34,6 +34,7 @@ class WinButton : public QPushButton {
     bool darkMode() const;
 
     protected:
+    bool eventFilter(QObject *obj, QEvent *event);
     void paintEvent(QPaintEvent *event) override;
     bool event(QEvent *event) override;
 

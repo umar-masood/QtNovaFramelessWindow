@@ -1,54 +1,30 @@
 #include <QApplication>
-#include <QLabel>
-#include <QVBoxLayout>
 #include <QPushButton>
-#include <QCheckBox>
-
+#include <QVBoxLayout>
 #include "Window.h"
 
 int main(int argc, char *argv[])
 {
     QApplication app(argc, argv);
 
-    Window window;
-    window.resize(900, 600);
+    // Create main window
+    Window w;
+    w.resize(800, 500);  // Set initial size
 
-    // --------------------------------------------------
-    // Content
-    // --------------------------------------------------
+    QWidget* content = w.contentArea();
+    QVBoxLayout* layout = new QVBoxLayout(content);
+    layout->setAlignment(Qt::AlignCenter);
 
-    auto *layout = new QVBoxLayout(window.contentArea());
+    QPushButton* toggleThemeBtn = new QPushButton("Toggle Dark/Light Mode", content);
+    layout->addWidget(toggleThemeBtn);
 
-    auto *label = new QLabel("Window Test");
-    label->setAlignment(Qt::AlignCenter);
+    QObject::connect(toggleThemeBtn, &QPushButton::clicked, [&w]() {
+        w.setDarkMode(!w.isDarkMode());
+    });
 
-    auto *darkMode = new QCheckBox("Dark Mode");
+    QPushButton* testBtn = new QPushButton("Test Button", content);
+    layout->addWidget(testBtn);
 
-    auto *blockInteraction = new QCheckBox("Block Interaction");
-
-    auto *borderButton = new QPushButton("Change Border");
-
-    layout->addWidget(label);
-    layout->addWidget(darkMode);
-    layout->addWidget(blockInteraction);
-    layout->addWidget(borderButton);
-
-    // --------------------------------------------------
-    // Tests
-    // --------------------------------------------------
-
-    QObject::connect(darkMode, &QCheckBox::toggled,
-                     &window, &Window::setDarkMode);
-
-    QObject::connect(blockInteraction, &QCheckBox::toggled,
-                     &window, &Window::setInteractionBlocked);
-
-    QObject::connect(borderButton, &QPushButton::clicked,
-                     [&window]() {
-                         window.setBorderColor(Qt::red);
-                     });
-
-    window.show();
-
+    w.show();
     return app.exec();
 }
