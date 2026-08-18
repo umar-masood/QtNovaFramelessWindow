@@ -1,12 +1,12 @@
 <RCC>
     <qresource prefix="/">
-    <file>Icons/restore_light.svg</file>
-    <file>Icons/restore_dark.svg</file>
-    <file>Icons/maximize_light.svg</file>
-    <file>Icons/maximize_dark.svg</file>
-    <file>Icons/minimize_light.svg</file>
-    <file>Icons/minimize_dark.svg</file>
-    <file>Icons/close_dark.svg</file>
-    <file>Icons/close_light.svg</file>
+        <file>icons/win-close-light.svg</file>
+        <file>icons/win-close-dark.svg</file>
+        <file>icons/win-maximize-light.svg</file>
+        <file>icons/win-maximize-dark.svg</file>
+        <file>icons/win-minimize-light.svg</file>
+        <file>icons/win-minimize-dark.svg</file>
+        <file>icons/win-restore-dark.svg</file>
+        <file>icons/win-restore-light.svg</file>
     </qresource>
 </RCC>

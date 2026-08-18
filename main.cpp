@@ -1,26 +1,54 @@
+#include <QApplication>
+#include <QLabel>
+#include <QVBoxLayout>
+#include <QPushButton>
+#include <QCheckBox>
+
 #include "Window.h"
 
 int main(int argc, char *argv[])
 {
     QApplication app(argc, argv);
 
-    Window w;
-    w.resize(500, 400);
+    Window window;
+    window.resize(900, 600);
 
-    // --- Add to content area ---
-    QVBoxLayout* contentLayout = new QVBoxLayout(w._contentArea());
-    contentLayout->setContentsMargins(10, 10, 10, 10);
-    contentLayout->setSpacing(10);
-    contentLayout->addWidget(new QLabel("Welcome to the content area"));
-    contentLayout->addWidget(new QPushButton("Click Me"));
+    // --------------------------------------------------
+    // Content
+    // --------------------------------------------------
 
-    // --- Add to title bar ---
-    QLabel* titleLabel = new QLabel("Custom Title");
-    titleLabel->setStyleSheet("font-weight: bold; color: white;");
-    titleLabel->setProperty("clickable widget", false); // Allow drag to work
-    w._titleBarLayout()->addWidget(titleLabel);
+    auto *layout = new QVBoxLayout(window.contentArea());
 
-    w.show();
+    auto *label = new QLabel("Window Test");
+    label->setAlignment(Qt::AlignCenter);
+
+    auto *darkMode = new QCheckBox("Dark Mode");
+
+    auto *blockInteraction = new QCheckBox("Block Interaction");
+
+    auto *borderButton = new QPushButton("Change Border");
+
+    layout->addWidget(label);
+    layout->addWidget(darkMode);
+    layout->addWidget(blockInteraction);
+    layout->addWidget(borderButton);
+
+    // --------------------------------------------------
+    // Tests
+    // --------------------------------------------------
+
+    QObject::connect(darkMode, &QCheckBox::toggled,
+                     &window, &Window::setDarkMode);
+
+    QObject::connect(blockInteraction, &QCheckBox::toggled,
+                     &window, &Window::setInteractionBlocked);
+
+    QObject::connect(borderButton, &QPushButton::clicked,
+                     [&window]() {
+                         window.setBorderColor(Qt::red);
+                     });
+
+    window.show();
+
     return app.exec();
 }
-

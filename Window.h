@@ -1,75 +1,143 @@
 #pragma once
-#include <QWidget>
-#include "components/Button.h"
-#include <dwmapi.h>
-#include <windowsx.h>
-#include <windows.h>
+
 #include <QWindow>
 #include <QHBoxLayout>
 #include <QObject>
+#include <QPoint>
+#include <QSet>
+#include <QResizeEvent>
+#include <QWidget>
+#include <QPushButton>
+#include <QPixmap>
+#include <memory>
+
+// Window Button 
+// This class is not a part of public API
+struct WinButtonPrivate {
+    public:
+    bool darkMode = false;
+    bool hovered = false;
+    bool pressed = false;
+
+    QPixmap iconLight, iconDark;
+};
+
+class WinButton : public QPushButton {
+    Q_OBJECT
+    
+    public:
+    WinButton(QWidget *parent = nullptr);
+
+    void setIconPaths(const QString &lightPath, const QString &darkPath);
+
+    void setDarkMode(bool dark);
+    bool darkMode() const;
+
+    protected:
+    void paintEvent(QPaintEvent *event) override;
+    bool event(QEvent *event) override;
+
+    private:
+    std::unique_ptr<WinButtonPrivate> m_d;
+};
+
+// Window 
+// This class is not a part of public API
+struct WindowPrivate {
+    bool darkMode = false;
+
+    // Border
+    QColor borderColor = QColor("#D0D0D0");
+
+    // Maximize / Restore / Normal
+    bool normalWindow = false;
+    QRect normalGeometry; 
+
+    // Interactive
+    bool interactionBlocked = false;
+    QSet<QWidget *> interactiveWidgets;
+
+    // Dragging
+    bool dragging = false;
+    QPoint dragStartGlobalPos, dragStartWindowPos;
+
+    // Resize
+    enum class ResizeRegion {
+        None,
+        Left,
+        Top,
+        Right,
+        Bottom,
+        TopLeft,
+        TopRight,
+        BottomLeft,
+        BottomRight
+    };
+
+    ResizeRegion currentResizeRegion = ResizeRegion::None;
+    const int resizeMargin = 6;
+
+    // Buttons
+    WinButton *closeBtn = nullptr;
+    WinButton *minimizeBtn = nullptr;
+    WinButton *maximizeBtn = nullptr;
+
+    // Main Title Bar
+    QWidget *mainTitleBar = nullptr;
+    QHBoxLayout *mainTitleBarLayout = nullptr;
+
+    // Sub Title Bar (Custom Title Bar)
+    QWidget *subTitleBar = nullptr;
+    QHBoxLayout *subTitleBarLayout = nullptr;
+
+    // Content Area
+    QWidget *contentArea = nullptr;
+
+    // Entire Layout
+    QVBoxLayout *entireLayout = nullptr;
+};
 
 class Window : public QWidget {
     Q_OBJECT
 
     public:
-    explicit Window( QWidget *parent = nullptr);
-    virtual ~Window() = default;
+    explicit Window(QWidget *parent = nullptr);
+    ~Window();
 
-    void setDarkMode(bool value);
-    void applyThemedIcons();
-    void applyStyleSheet();
-    void setupTitleBar();
+    void setDarkMode(bool dark);
+    bool darkMode() const;
 
-    QHBoxLayout* titleBarLayout() const;
-    QWidget* customTitleBar() const;
+    void setInteractiveTitleBarWidget(QWidget *widget);
+    void setInteractionBlocked(bool enable);
+    void setBorderColor(const QColor &color);
+
     QWidget* titleBar() const;
     QWidget* contentArea() const;
 
-    HWND hwnd;
-
     protected:
+    bool eventFilter(QObject *obj, QEvent *event);
     void paintEvent(QPaintEvent *event) override;
-    bool nativeEvent(const QByteArray &eventType, void *message, qintptr *result) override;
-    bool event(QEvent *evt) override;
+    void changeEvent(QEvent *event) override;
+    void showEvent(QShowEvent *event) override;
+    void mouseMoveEvent(QMouseEvent *event) override;
+    void mouseReleaseEvent(QMouseEvent *event);
+    void mousePressEvent(QMouseEvent *event) override;
+    void leaveEvent(QEvent *event);
+    void resizeEvent(QResizeEvent *event);
+    bool event(QEvent *event) override;
 
     private:
-    bool determineNonClickableWidgetUnderMouse(QLayout *layout, int x, int y);
-    void propagateActiveStateInCustomTitlebar(QLayout *layout, bool active_state);
+    std::unique_ptr<WindowPrivate> m_d = nullptr;
 
-    Button* windowButton();
+    void setWindowButtonsIcons();
+    void updateMaximizeIcon();
+    WinButton* createWindowButton();
 
-    bool isDarkMode;
-    bool showBorder = true;
-
-    Button *closeBtn = nullptr;
-    Button *minimizeBtn = nullptr;
-    Button *maximizeBtn = nullptr;
+    void updateCursorForRegion(WindowPrivate::ResizeRegion region);
+    WindowPrivate::ResizeRegion detectResizeRegion(const QPoint &pos);
     
-    QWidget *_titleBar = nullptr;
-    QHBoxLayout *titleBarLayout = nullptr;
-
-    QWidget *_customTitleBar = nullptr;
-    QHBoxLayout *_customTitleBarLayout = nullptr;
-
-    QWidget *_contentArea = nullptr;
-    QVBoxLayout *entireLayout = nullptr;
-    
-    const QString closeIconLight = ":/Icons/close_light.svg";
-    const QString closeIconDark = ":/Icons/close_dark.svg";
-
-    const QString minimizeIconLight = ":/Icons/minimize_light.svg";
-    const QString minimizeIconDark = ":/Icons/minimize_dark.svg";
-
-    const QString maximizeIconLight = ":/Icons/maximize_light.svg";
-    const QString maximizeIconDark = ":/Icons/maximize_dark.svg";
-
-    const QString restoreIconLight = ":/Icons/restore_light.svg";
-    const QString restoreIconDark = ":/Icons/restore_dark.svg";
+    bool isPointInsideInteractiveTitleBarWidgets(int x, int y);
 
     private slots:
-    void onCloseClicked();
     void onMaximizeClicked();
-    void onMinimizeClicked();
 };
-
-

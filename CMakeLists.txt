@@ -11,10 +11,8 @@ find_package(Qt6 REQUIRED COMPONENTS Widgets Core Gui)
 add_executable(QtNovaFramelessWindow 
     resources.qrc
     Window.cpp
-    components/Button.cpp  
-    components/SmoothOpacity.cpp  
-    components/SmoothShadow.cpp  
+    main.cpp
 )
 
-target_link_libraries(QtNovaFramelessWindow  PRIVATE Qt6::Widgets Qt6::Gui Qt6::Core dwmapi)
+target_link_libraries(QtNovaFramelessWindow PRIVATE Qt6::Widgets Qt6::Gui Qt6::Core dwmapi)
 
