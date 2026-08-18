@@ -194,7 +194,7 @@ bool Window::eventFilter(QObject *obj, QEvent *event) {
         if (!isActiveWindow()) 
             return QWidget::eventFilter(obj, event);
 
-        if (m_d->normalWindow && rect().contains(windowPos)) {
+        if (m_d->normalWindow && !m_d->interactionBlocked && rect().contains(windowPos)) {
             ResizeRegion region = detectResizeRegion(windowPos);
             updateCursorForRegion(region);
             m_d->currentResizeRegion = region;
