@@ -64,6 +64,11 @@ Window::Window(QWidget *parent) : QWidget(parent), m_d(std::make_unique<WindowPr
     m_d->entireLayout->addWidget(m_d->contentArea, 0);
     setLayout(m_d->entireLayout);
 
+    /* Overlay */
+    m_d->overlay = new QWidget(this);
+    m_d->overlay->setStyleSheet("background-color: rgba(0, 0, 0, 150); border-radius: 8px;");
+    m_d->overlay->hide();
+
     /* Apply Styles */
     setDarkMode(m_d->darkMode);
 
@@ -118,11 +123,17 @@ bool Window::isPointInsideInteractiveTitleBarWidgets(int x, int y) {
     return false;
 }
 
-void Window::setInteractionBlocked(bool enable) {
-    m_d->interactionBlocked = enable;
+void Window::setModal(bool enable) {
+    m_d->modal = enable;
 
-    if (m_d->interactionBlocked)
+    if (m_d->modal)
         setCursor(Qt::ArrowCursor);
+
+    if (!m_d->overlay->isVisible()) {
+        m_d->overlay->setGeometry(rect());
+        m_d->overlay->raise();
+        m_d->overlay->show();
+    }
 }
 
 void Window::setBorderColor(const QColor &color) {
@@ -182,7 +193,7 @@ void Window::updateCursorForRegion(ResizeRegion region) {
         case ResizeRegion::BottomRight:   setCursor(Qt::SizeFDiagCursor); break;
         case ResizeRegion::TopRight:
         case ResizeRegion::BottomLeft:    setCursor(Qt::SizeBDiagCursor); break;
-        default:                                         unsetCursor();                  break;
+        default:                          unsetCursor();                  break;
     }
 }
 
@@ -194,7 +205,7 @@ bool Window::eventFilter(QObject *obj, QEvent *event) {
         if (!isActiveWindow()) 
             return QWidget::eventFilter(obj, event);
 
-        if (m_d->normalWindow && !m_d->interactionBlocked && rect().contains(windowPos)) {
+        if (m_d->normalWindow && !m_d->modal && rect().contains(windowPos)) {
             ResizeRegion region = detectResizeRegion(windowPos);
             updateCursorForRegion(region);
             m_d->currentResizeRegion = region;
@@ -213,7 +224,7 @@ bool Window::eventFilter(QObject *obj, QEvent *event) {
         }
     }
 
-    if (m_d->interactionBlocked) {
+    if (m_d->modal) {
         switch (event->type()) {
             case QEvent::MouseButtonPress:
             case QEvent::MouseButtonRelease:

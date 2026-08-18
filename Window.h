@@ -56,7 +56,7 @@ struct WindowPrivate {
     QRect normalGeometry; 
 
     // Interactive
-    bool interactionBlocked = false;
+    bool modal = false;
     QSet<QWidget *> interactiveWidgets;
 
     // Dragging
@@ -97,6 +97,9 @@ struct WindowPrivate {
 
     // Entire Layout
     QVBoxLayout *entireLayout = nullptr;
+
+    // Overlay Widget
+    QWidget *overlay = nullptr;
 };
 
 class Window : public QWidget {
@@ -110,7 +113,7 @@ class Window : public QWidget {
     bool darkMode() const;
 
     void setInteractiveTitleBarWidget(QWidget *widget);
-    void setInteractionBlocked(bool enable);
+    void setModal(bool enable);
     void setBorderColor(const QColor &color);
     void setBackgroundColor(const QColor &light, const QColor &dark);
 
