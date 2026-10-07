@@ -3,7 +3,7 @@
 **QtNovaFramelessWindow** is a Qt-based replacement for the native system window frame. It provides a fully custom **title bar**, **window controls** (close, minimize, maximize), support for **resizing**, and **dark mode** theming.
 
 
-## ✨ Features
+## Features
 - Frameless custom window (replaces native OS frame).
 - Resizable with custom hit-testing.
 - Custom title bar with close, minimize, and maximize buttons.
@@ -17,7 +17,7 @@
 <img width="1365" height="767" alt="image" src="https://github.com/user-attachments/assets/2df7f112-548a-47e0-ad7b-4edf85e0af91" />
 
 
-## 📦 File Structure
+## File Structure
 **QtNovaFramelessWindow/**
 
 `Window.h`  
@@ -28,7 +28,7 @@
 
 `resources.qrc`
 
-## 🚀 Usage
+## Usage
 ### Include in your project
 1. Copy `Window.h` and `Window.cpp` into your project’s `src/` folder.
 2. Include the header in your code:
@@ -49,7 +49,7 @@ int main(int argc, char *argv[]) {
 }
 ```
 
-## 🧱 Adding Application UI (Content Area)
+## Adding Application UI (Content Area)
 ```cpp
 QVBoxLayout *layout = new QVBoxLayout(window->contentArea());
 QPushButton *btn = new QPushButton("Click Me");
